@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f8fa">
+<title>Canon Studio · TS5350i</title>
+<link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+<div class="app">
+  <header class="head">
+    <div class="brand"><div class="logo" aria-hidden="true">▣</div><div>Canon Studio<div class="sub">PIXMA TS5350i · Wi-Fi Print Manager</div></div></div>
+    <div class="status"><span class="dot" id="dot"></span><span id="connection">Проверка принтера…</span></div>
+  </header>
+  <h1>Печать и управление очередью</h1>
+  <p class="lead">Выберите документ, страницы и параметры. Отправка начинается только после нажатия кнопки.</p>
+  <main class="grid">
+    <section class="card">
+      <div class="card-head"><h2>01 · Документ</h2><span class="tag">PDF · Office · Фото</span></div>
+      <div class="drop" id="drop">
+        <div id="emptyUpload"><div class="upload" aria-hidden="true">⇧</div><strong>Перетащите документ сюда</strong><p>PDF, DOCX, DOC, TXT, RTF, ODT, XLSX, PPTX · JPG, PNG, WebP, TIFF, BMP, GIF · до 20 МБ</p><button type="button" class="btn" id="choose">Выбрать файл</button></div>
+        <div id="pdfStage" class="pdf-stage"><canvas id="pdfCanvas" aria-label="Просмотр выбранной страницы PDF"></canvas></div>
+        <img id="imgPreview" class="preview" alt="Предпросмотр JPG после настройки оттенков">
+        <div id="filename" class="filename"></div>
+        <div id="replace" class="hidden"><button type="button" class="btn" id="replaceButton">Заменить файл</button> <a id="openPreview" target="_blank" rel="noopener" href="#">Открыть просмотр</a></div>
+      </div>
+      <div id="pdfControls" class="pdf-controls hidden" aria-label="Навигация по PDF">
+        <button type="button" class="btn" id="pdfPrev" aria-label="Предыдущая страница">←</button>
+        <label for="pdfCurrentPage">Страница</label>
+        <input id="pdfCurrentPage" type="number" min="1" step="1" value="1" aria-label="Текущая страница PDF">
+        <span class="page-count">из <strong id="pdfPageCount">?</strong></span>
+        <button type="button" class="btn" id="pdfNext" aria-label="Следующая страница">→</button>
+        <span class="pdf-loading" id="pdfViewerMessage" role="status">Загрузка PDF…</span>
+      </div>
+      <input type="file" accept=".pdf,.docx,.doc,.txt,.rtf,.odt,.xlsx,.xls,.ods,.csv,.pptx,.ppt,.odp,.jpg,.jpeg,.png,.webp,.bmp,.gif,.tif,.tiff" id="file" class="hidden" aria-label="Файл для печати">
+      <div class="two" style="margin-top:14px"><div class="info"><small>Тип файла</small><b id="format">Не выбран</b></div><div class="info"><small>Размер</small><b id="size">—</b></div></div>
+      <div class="divider"></div>
+      <div class="card-head"><h2>02 · Принтер</h2><button id="refresh" type="button" class="link-btn">↻ Обновить</button></div>
+      <label class="label" for="printer">Очередь Windows</label>
+      <select id="printer" style="width:100%"><option value="">Загрузка…</option></select>
+      <div class="device"><div class="device-icon" aria-hidden="true">▣</div><div><strong>Canon PIXMA TS5350i</strong><p id="deviceInfo">Подключение к Wi-Fi…</p></div></div>
+      <p class="note">Данные о картриджах: <strong>уровень неизвестен</strong> (Canon не передаёт проценты через IPP).</p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>03 · Настройки печати</h2><span class="tag">Настраиваемо</span></div>
+      <div class="field"><label class="label">Цвет</label><div class="seg two-seg" id="colors"><button type="button" class="selected" data-value="monochrome">◐ Чёрно-белый</button><button type="button" data-value="color">Цветной</button></div><p class="note">Ч/б не гарантирует использование только чёрного картриджа. Black Only выбери в драйвере Canon.</p></div>
+      <div class="field"><label class="label">Качество</label><div class="seg" id="qualities"><button type="button" data-value="draft">Черновик</button><button type="button" class="selected" data-value="standard">Стандарт</button><button type="button" data-value="high">Высокое</button></div></div>
+      <div class="field"><label class="label">Приоритет скорости</label><div class="seg" id="speeds"><button type="button" data-value="fast">Быстро</button><button type="button" class="selected" data-value="balanced">Баланс</button><button type="button" data-value="detailed">Детально</button></div><p class="note" id="qualityNotice">Скорость не является отдельной командой: Draft / Standard / High меняют компромисс качества и скорости.</p></div>
+
+      <fieldset class="fieldset" id="inkControls"><legend>Интенсивность и контраст · все файлы</legend>
+        <div class="field"><label class="label">Профиль</label><div class="seg" id="presets"><button type="button" data-value="economy">Экономный</button><button type="button" class="selected" data-value="normal">Обычный</button><button type="button" data-value="rich">Насыщенный</button></div></div>
+        <div class="field"><div class="range-line"><label for="density">Интенсивность</label><output id="densityValue">0</output></div><input type="range" class="range" id="density" min="-50" max="50" step="5" value="0"><div class="edges"><span>Светлее</span><span>Темнее</span></div></div>
+        <div class="field"><div class="range-line"><label for="contrast">Контрастность</label><output id="contrastValue">0</output></div><input type="range" class="range" id="contrast" min="-50" max="50" step="5" value="0"><div class="edges"><span>Меньше</span><span>Больше</span></div></div>
+        <p class="note">Для PDF, Word, Excel и фото коррекция применяется к содержимому перед печатью. Белый фон сохраняется. Это не физическая регулировка подачи чернил.</p>
+      </fieldset>
+
+      <div class="divider"></div>
+      <h3>04 · Страницы и бумага</h3>
+      <div class="field" id="pagesBlock">
+        <div class="label">Страницы документа</div>
+        <div class="choice" role="radiogroup" aria-label="Какие страницы печатать">
+          <label class="page-choice"><input type="radio" name="pageMode" value="all" checked> Все страницы</label>
+          <label class="page-choice"><input type="radio" name="pageMode" value="range"> Диапазон: с … по …</label>
+          <label class="page-choice"><input type="radio" name="pageMode" value="current" id="currentMode" disabled> Текущую в просмотре</label>
+        </div>
+        <div id="rangeBlock" class="pages-input hidden"><div><label class="label" for="from">С какой</label><input id="from" type="number" min="1" max="9999" step="1" placeholder="1"></div><div><label class="label" for="to">По какую</label><input id="to" type="number" min="1" max="9999" step="1" placeholder="Например, 5"></div></div>
+        <p class="note" id="pageHelp">Выбор диапазона разрешён только в пределах реального числа страниц. Текущая страница соответствует просмотру слева.</p><p class="page-error hidden" id="pageError" role="alert"></p>
+      </div>
+      <div class="grid-fields">
+        <div class="field"><label class="label" for="pageFilter">Отбор страниц</label><select id="pageFilter"><option value="all">Все выбранные</option><option value="odd">Только нечётные</option><option value="even">Только чётные</option></select></div>
+        <div class="field"><label class="label" for="copies">Копий</label><input id="copies" type="number" min="1" max="10" value="1"></div>
+        <div class="field"><label class="label" for="paper">Бумага</label><select id="paper"><option value="A4">A4</option><option value="A5">A5</option><option value="Letter">Letter</option></select></div>
+        <div class="field"><label class="label" for="duplex">Стороны листа</label><select id="duplex"><option value="simplex">Односторонняя</option><option value="duplexlong">Двусторонняя · длинный край</option><option value="duplexshort">Двусторонняя · короткий край</option></select></div>
+        <div class="field"><label class="label" for="scale">Масштаб PDF</label><select id="scale"><option value="fit">По размеру листа</option><option value="shrink">Только уменьшать</option><option value="noscale">100% без масштабирования</option></select></div>
+      </div>
+      <div class="hint" id="capability">Для фотографий качество задаётся через IPP, для документов — через драйвер Windows.</div>
+      <div class="summary" id="summary">Сначала выберите файл.</div>
+      <div class="actions"><button id="print" class="btn primary" type="button" disabled>▣ Начать печать</button><button id="cancel" class="btn danger" type="button" disabled>✕ Отменить</button></div>
+      <div id="flash" class="flash" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card wide">
+      <div class="card-head"><h2>05 · Очередь печати Windows</h2><button type="button" class="btn" id="refreshQueue">↻ Обновить очередь</button></div>
+      <p class="note">Можно отменить конкретный документ из очереди Canon. Изображения, отправленные напрямую по IPP, не всегда отображается в очереди Windows.</p>
+      <div id="queue" class="job-list" style="margin-top:16px"><div class="empty">Загрузка заданий…</div></div>
+      <div class="divider"></div>
+      <h3>Последние задания Canon Studio</h3>
+      <div id="history" class="job-list"><div class="empty">Заданий пока нет.</div></div>
+    </section>
+  </main>
+  <footer>Canon Studio — локальный интерфейс, только на этом компьютере (127.0.0.1). Интерфейс адаптируется под телефон и планшет; удалённый доступ не включён из соображений безопасности.</footer>
+</div>
+<script type="module" src="/assets/js/app.js"></script>
+</body>
+</html>

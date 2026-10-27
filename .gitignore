@@ -1,0 +1,38 @@
+# Dependency installation is always local
+node_modules/
+
+# Secrets and machine-specific settings
+.env
+.env.*
+!.env.example
+
+# Build, coverage, editor and OS state
+coverage/
+dist/
+build/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+
+# Generated jobs, temporary documents and local snapshots
+*.pdf.tmp
+*.part
+*.bak
+backup*/
+_backups/
+*.zip
+*.7z
+*.rar
+diagnostics/
+.tmp/
+temp/
+uploads/
+printouts/
+
+# Never commit original personal documents/photos
+*.local.pdf
+*.local.jpg
+*.local.png

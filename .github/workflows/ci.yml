@@ -1,0 +1,21 @@
+name: Test Canon Studio
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Poppler
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - name: Install npm dependencies
+        run: npm install
+      - name: Check source syntax
+        run: npm run check
+      - name: Run test suite
+        run: npm test

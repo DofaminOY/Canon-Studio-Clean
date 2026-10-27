@@ -1,0 +1,20 @@
+{
+  "name": "canon-studio",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test",
+    "check": "node scripts/check-syntax.mjs"
+  },
+  "dependencies": {
+    "pdfjs-dist": "5.4.530",
+    "sharp": "0.34.4",
+    "pdfkit": "0.20.2"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Local Canon TS5350i print studio with modular browser UI and Windows/IPP print backends"
+}
