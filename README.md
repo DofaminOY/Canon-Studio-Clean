@@ -1,4 +1,4 @@
-# Canon Studio 4.0 — local printing + Vercel web interface
+# Canon Studio 4.2 — local printing + securely paired Windows Agent
 
 Node.js 22+ | Windows 10/11 | Canon TS5350i series | IPP / Windows Print Spooler
 
@@ -37,7 +37,7 @@ npm start
 
 Vercel automatically uses `vercel.json` to run `npm run build:web`, copying the two `pdfjs-dist` browser modules into `public/vendor` before publishing the `public` folder. There is **no Node.js printer service on Vercel**. The published web UI can choose local files (with user consent) and show PDFs/photos. Browser fallback opens PDF/image/TXT for Ctrl+P; Office files can be downloaded for opening in a compatible application.
 
-Local printing from a public HTTPS origin requires explicit permission in the browser and **opt-in on the Windows PC**. The web UI never probes localhost until the user clicks **Подключить локальный агент**. On the Windows PC, install/keep Canon Studio and run from PowerShell:
+Local printing from a public HTTPS origin requires explicit permission in the browser and **opt-in on the Windows PC**. The web UI never probes localhost until the user clicks **Подключить локальный агент**. The local page now generates a short-lived one-time pairing code; a permitted Vercel origin still needs explicit pairing before it can read printer data or submit jobs. On the Windows PC, install/keep Canon Studio and run from PowerShell:
 
 ```powershell
 Set-Location 'G:\IT\Node.JS\Canon-Studio-Clean'
@@ -102,3 +102,7 @@ To actually delete **only the listed backups/update ZIPs** after validating the 
 ```
 
 The cleanup script never deletes your existing `src`, `public`, `package.json` or files of unknown origin.
+
+## Windows Agent installer preview
+
+See [docs/agent.md](docs/agent.md) for the one-time pairing workflow, Windows tray app, Inno Setup build, and security/compatibility limitations. This is a **source and installer-build preview**, not a signed or physically certified Windows executable.

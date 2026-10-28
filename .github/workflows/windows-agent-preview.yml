@@ -1,0 +1,29 @@
+name: Build Windows Agent Preview
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-preview:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Check syntax
+        run: npm run check
+      - name: Security and installer tests
+        run: node --test tests/pairing.test.mjs tests/installer.test.mjs
+      - name: Install Inno Setup 6
+        run: choco install innosetup -y --no-progress
+      - name: Build preview installer
+        shell: powershell
+        run: .\scripts\build-windows-installer.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CanonStudioAgent-Windows-unsigned-preview
+          path: dist/installer/CanonStudioAgent-Setup.exe

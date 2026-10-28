@@ -21,6 +21,13 @@
       <button type="button" class="btn" id="searchDevices" disabled>↻ Найти принтеры</button>
       <button type="button" class="btn" id="browserPrint" disabled>Открыть для печати через браузер</button>
     </div>
+    <div id="localPairingTools" class="note hidden" aria-label="Разрешение доступа сайту">
+      <strong>Подключение сайта к этому компьютеру</strong>
+      <p>Запросите одноразовый код и введите его на сайте Canon Studio. Код действует 5 минут, не отправляйте его посторонним.</p>
+      <button type="button" class="btn" id="showPairCode">Показать код подключения</button>
+      <button type="button" class="btn" id="revokePairings">Отключить все сайты</button>
+      <strong id="pairCodeText" role="status" aria-live="polite"></strong>
+    </div>
     <p class="note">Без локального агента можно выбирать и просматривать файлы. Для полного управления качеством, цветом, чернилами и очередью требуется агент на Windows. Доступ к локальной сети браузер запросит только после нажатия «Подключить».</p>
   </section>
   <h1>Печать и управление очередью</h1>

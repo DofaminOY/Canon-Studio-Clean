@@ -34,6 +34,7 @@ function updateConnectionUI() {
 export function initConnectionMode() {
   state.mode = isLocalPage() ? 'local' : 'web';
   updateConnectionUI();
+  $('localPairingTools').classList.toggle('hidden', state.mode !== 'local');
 }
 
 export function setConnected(connected) {
@@ -54,9 +55,25 @@ export async function connectAgent() {
     const health = await response.json();
     if (health.service !== 'canon-studio-agent' || health.ok !== true) throw Error('Неизвестный локальный сервис.');
     setApiBase(base);
-    const config = await api('/api/config');
-    if (!config.token) throw Error('Агент не выдал сеанс.');
-    state.token = config.token;
+    if (state.mode === 'web') {
+      // Consent: the code can be obtained only from the local UI on this computer.
+      const code = window.prompt('Откройте http://127.0.0.1:3177 в другой вкладке, нажмите «Показать код подключения» и введите 8 цифр сюда:');
+      if (code === null) throw Error('Подключение отменено пользователем.');
+      if (!/^\d{8}$/.test(code.trim())) throw Error('Нужен восьмизначный код Agent.');
+      const result = await fetch(base + '/api/pairing', {
+        method: 'POST', mode: 'cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code.trim() }),
+        signal: AbortSignal.timeout(6000),
+      });
+      const paired = await result.json();
+      if (!result.ok || !paired.token) throw Error(paired.error || 'Не удалось подтвердить код.');
+      state.token = paired.token;
+    } else {
+      const config = await api('/api/config');
+      if (!config.token) throw Error('Агент не выдал локальный сеанс.');
+      state.token = config.token;
+    }
     setConnected(true);
     const { loadPrinters, loadStatus, loadQueue, loadTasks } = await import('./printers.js');
     await loadPrinters();
@@ -113,4 +130,23 @@ export function openBrowserPrint() {
   }
   // Do not revoke immediately: the newly opened tab/download still needs the blob.
   setTimeout(() => URL.revokeObjectURL(url), 120000);
+}
+
+// These actions exist only in the locally served UI, never reveal pairing codes over Vercel.
+export async function showLocalPairCode() {
+  if (state.mode !== 'local') return;
+  try {
+    const result = await api('/api/pairing/code');
+    $('pairCodeText').textContent = `Код: ${result.code} (5 минут)`;
+  } catch (error) { flash('Не удалось получить код: ' + error.message, 'bad'); }
+}
+
+export async function revokePairings() {
+  if (state.mode !== 'local') return;
+  if (!confirm('Отключить все ранее подключённые сайты?')) return;
+  try {
+    await api('/api/pairing/revoke', { method: 'POST' });
+    $('pairCodeText').textContent = 'Все подключения отозваны';
+    flash('Доступ сайтов к этому Agent отключён.', 'good');
+  } catch (error) { flash(error.message, 'bad'); }
 }

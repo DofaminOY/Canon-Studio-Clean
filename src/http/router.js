@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { HOST, PORT, ROOT, TOKEN, PRINTER_IP } from '../config.js';
 import { corsHeaders, allowedOrigin, safeLoopbackHost } from './origins.js';
+import { createPairingManager, isLocalBrowserRequest } from '../agent/pairing.js';
 import { reply, bodyOf, postAllowed } from './helpers.js';
 import { getPrinters, getJobs, removeJob } from '../printers/windows.js';
 import { sendIPP, ippBody } from '../printers/ipp.js';
@@ -13,6 +14,7 @@ import { handlePrint, cancelTask } from '../jobs/requests.js';
 
 // Routes preserve the v3.2 frontend API. The server binds only to localhost.
 export function createServer() {
+  const pairing = createPairingManager();
   return http.createServer(async (req, res) => {
   try {
     if (!safeLoopbackHost(req.headers.host)) return reply(res, 403, { error: 'Недопустимый Host.' });
@@ -25,8 +27,33 @@ export function createServer() {
       return reply(res, 403, { error: 'Origin не разрешён.' });
     }
     const url = new URL(req.url, `http://${HOST}:${PORT}`);
+    const local = isLocalBrowserRequest(req);
+    const remoteOrigin = req.headers.origin && !local ? req.headers.origin : '';
+    const remoteAuthorized = remoteOrigin && pairing.authorized(remoteOrigin, req.headers['x-canon-token']);
+    // A trusted CORS origin alone is NOT a printer authorization. Pairing is required.
+    if (req.method === 'GET' && url.pathname === '/api/pairing/code') {
+      if (!local) return reply(res, 403, { error: 'Код виден только в локальном интерфейсе Agent.' });
+      return reply(res, 200, pairing.issuePin());
+    }
+    if (req.method === 'POST' && url.pathname === '/api/pairing') {
+      if (!remoteOrigin || !allowedOrigin(remoteOrigin)) return reply(res, 403, { error: 'Сайт не разрешён.' });
+      const content = await bodyOf(req, 1024);
+      let payload;
+      try { payload = JSON.parse(content.toString('utf8')); } catch { return reply(res, 400, { error: 'Неверный запрос.' }); }
+      const result = pairing.pair(remoteOrigin, payload.code);
+      if (!result.ok) return reply(res, result.status, { error: result.status === 429 ? 'Слишком много попыток. Попробуйте позже.' : 'Неверный или просроченный код.' });
+      return reply(res, 200, { token: result.token, expiresInSeconds: result.expiresInSeconds });
+    }
+    if (req.method === 'POST' && url.pathname === '/api/pairing/revoke') {
+      if (!local || req.headers['x-canon-token'] !== TOKEN) return reply(res, 403, { error: 'Только владелец Agent может отключить сайты.' });
+      pairing.revokeAll();
+      return reply(res, 200, { revoked: true });
+    }
+    const publicPath = url.pathname === '/api/health' || url.pathname === '/' || url.pathname === '/index.html' ||
+      url.pathname.startsWith('/assets/') || url.pathname.startsWith('/vendor/');
+    if (!publicPath && !local && !remoteAuthorized) return reply(res, 403, { error: 'Требуется подтверждённое подключение к Agent.' });
     if (req.method === 'GET' && url.pathname === '/api/health') {
-      return reply(res, 200, { service: 'canon-studio-agent', ok: true, version: '4.1.0' });
+      return reply(res, 200, { service: 'canon-studio-agent', ok: true, version: '4.2.0' });
     }
     if (req.method === 'GET' && url.pathname === '/api/discovery') {
       let printers = [];
@@ -74,7 +101,7 @@ export function createServer() {
       return fs.createReadStream(modulePath).pipe(res);
     }
     if (req.method === 'GET' && url.pathname === '/api/config') {
-      return reply(res, 200, { token: TOKEN, ip: PRINTER_IP, limit: MAX_UPLOAD_BYTES });
+      return reply(res, 200, { token: local ? TOKEN : undefined, ip: PRINTER_IP, limit: MAX_UPLOAD_BYTES });
     }
     if (req.method === 'GET' && url.pathname === '/api/printers') {
       return reply(res, 200, { printers: await getPrinters() });
@@ -99,7 +126,7 @@ export function createServer() {
       return reply(res, 200, { jobs: await getJobs(printer) });
     }
     if (req.method === 'POST') {
-      if (!postAllowed(req)) return reply(res, 403, { error: 'Запрос запрещён: требуется сеанс Canon Studio.' });
+      if (!(local ? postAllowed(req) : remoteAuthorized)) return reply(res, 403, { error: 'Запрос запрещён: требуется сеанс Canon Studio.' });
       if (url.pathname === '/api/preview-image') {
         const name = String(url.searchParams.get('name') || '');
         if (fileKind(name) !== 'image') return reply(res, 400, { error: 'Нужен файл изображения.' });
