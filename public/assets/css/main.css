@@ -276,36 +276,81 @@ h3 {
 .field select,.field input[type=number] {
   width:100%;
 }
+/* Однотипные переключатели: фиксированная сетка, без скачков при выборе. */
 .seg {
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:5px;
-  padding:5px;
-  border-radius:12px;
-  background:#f0f4f6;
+  gap:6px;
+  padding:6px;
+  border:1px solid #d9e5e5;
+  border-radius:14px;
+  background:#eef3f4;
 }
 .seg.two-seg {
   grid-template-columns:repeat(2,minmax(0,1fr));
 }
 .seg button {
-  border:0;
-  border-radius:9px;
-  color:#596e7b;
-  background:transparent;
-  padding:11px 6px;
-  font-size:.91rem;
-  font-weight:700;
-  min-height:43px;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  min-width:0;
+  min-height:54px;
+  padding:17px 7px 9px;
+  border:1px solid #d2e0e2;
+  border-radius:10px;
+  color:#364e58;
+  background:#fff;
+  font-size:.88rem;
+  font-weight:720;
+  line-height:1.2;
+  text-align:center;
+  overflow-wrap:anywhere;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease;
 }
-.seg button.selected {
-  background:white;
-  color:#0e6862;
-  box-shadow:0 1px 7px #1c364019;
+.seg button:hover:not(.selected):not(:disabled) {
+  background:#e1f0ec;
+  border-color:#84b7ae;
+  color:#154f47;
 }
-.seg.disabled {
-  opacity:.48;
+.seg button.selected,
+.seg button[aria-pressed="true"] {
+  background:#146b60;
+  border-color:#0c554a;
+  color:#fff;
+  box-shadow:0 2px 6px #145e5329;
+}
+.seg button.selected::after,
+.seg button[aria-pressed="true"]::after {
+  content:"✓";
+  position:absolute;
+  top:3px;
+  right:5px;
+  display:grid;
+  place-items:center;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#fff;
+  color:#146b60;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
   pointer-events:none;
 }
+.seg .seg-title { font-weight:800; }
+.seg .seg-hint { font-size:.75rem; font-weight:550; opacity:.84; }
+.seg.disabled { opacity:.48; pointer-events:none; }
+.seg button:disabled { opacity:.48; }
+.profile-mode {
+  margin:7px 0 0;
+  color:#48645c;
+  font-size:.8rem;
+  font-weight:650;
+}
+.profile-mode.custom { color:#8a571d; }
 .note {
   color:#627584;
   font-size:.85rem;
@@ -543,24 +588,33 @@ footer {
   color:#647688;
   font-size:.82rem;
 }
+/* Варианты страниц выделяются так же явно, как кнопки качества. */
 .page-choice {
   display:flex;
   align-items:center;
-  gap:7px;
-  padding:10px 12px;
-  border:1px solid #dce7e9;
+  gap:8px;
+  padding:11px 13px;
+  border:1px solid #cbdedf;
   border-radius:10px;
+  color:#364e58;
+  font-weight:700;
   cursor:pointer;
   background:#fff;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease;
 }
-.page-choice input {
-  margin:0;
-  accent-color:#16796e;
+.page-choice:hover:not(:has(input:disabled)):not(:has(input:checked)) {
+  background:#e1f0ec;
+  border-color:#84b7ae;
 }
+.page-choice input { margin:0; accent-color:#146b60; }
 .page-choice:has(input:checked) {
-  background:#eaf7f3;
-  border-color:#72aaa2;
+  background:#146b60;
+  border-color:#0c554a;
+  color:#fff;
 }
+.page-choice:has(input:checked) input { accent-color:#e3fff0; }
+.page-choice:has(input:disabled) { opacity:.48; cursor:not-allowed; }
+.page-choice:has(input:focus-visible) { outline:3px solid #42a8a0; outline-offset:2px; }
 .page-help {
   margin:6px 0 0;
   color:#607581;
@@ -617,8 +671,15 @@ footer {
     font-size:.8rem;
   }
   .seg button {
-    font-size:.82rem;
-    padding:8px 3px;
+    font-size:.78rem;
+    min-height:62px;
+    padding:18px 3px 9px;
+  }
+  .seg .seg-hint { font-size:.68rem; }
+  #presets button {
+    font-size:.72rem;
+    letter-spacing:-.02em;
+    white-space:nowrap;
   }
   .job {
     align-items:flex-start;

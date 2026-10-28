@@ -1,6 +1,6 @@
 import { $, flash } from './dom.js';
 import { state } from './state.js';
-import { speedOf, qualityOf, presets } from './files.js';
+import { presets } from './files.js';
 import { api } from './api.js';
 import { initConnectionMode, setConnected, connectAgent, discoverPrinters, openBrowserPrint, showLocalPairCode, revokePairings } from './connection.js';
 import { updateOptions, syncPageMode, summary } from './settings.js';
@@ -26,16 +26,21 @@ document.querySelectorAll('#colors button').forEach((button) => button.addEventL
   state.settings.color = button.dataset.value; updateOptions(); updateJPEG();
 }));
 document.querySelectorAll('#qualities button').forEach((button) => button.addEventListener('click', () => {
-  state.settings.quality = button.dataset.value; state.settings.speed = speedOf[state.settings.quality]; updateOptions();
-}));
-document.querySelectorAll('#speeds button').forEach((button) => button.addEventListener('click', () => {
-  state.settings.speed = button.dataset.value; state.settings.quality = qualityOf[state.settings.speed]; updateOptions();
+  // Качество и скорость — один параметр: Draft / Standard / High.
+  state.settings.quality = button.dataset.value; updateOptions();
 }));
 document.querySelectorAll('#presets button').forEach((button) => button.addEventListener('click', () => {
-  state.settings.density = presets[button.dataset.value]; updateOptions(); updateJPEG();
+  // Профиль устанавливает интенсивность и возвращает нейтральный контраст.
+  state.settings.preset = button.dataset.value;
+  state.settings.density = presets[state.settings.preset];
+  state.settings.contrast = 0;
+  updateOptions(); updateJPEG();
 }));
 for (const name of ['density', 'contrast']) $(name).addEventListener('input', (event) => {
-  state.settings[name] = Number(event.target.value); updateOptions(); updateJPEG();
+  state.settings[name] = Number(event.target.value);
+  // Любая ручная коррекция означает собственную настройку, а не готовый профиль.
+  state.settings.preset = null;
+  updateOptions(); updateJPEG();
 });
 document.querySelectorAll('input[name=pageMode]').forEach((el) => el.addEventListener('change', syncPageMode));
 $('pdfPrev').addEventListener('click', () => choosePdfPage(state.pdfPageNumber - 1));

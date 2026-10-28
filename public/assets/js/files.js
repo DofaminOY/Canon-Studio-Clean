@@ -1,8 +1,6 @@
 import { state } from './state.js';
 
 export const MAX_FILE = 20 * 1024 * 1024;
-export const speedOf = { draft: 'fast', standard: 'balanced', high: 'detailed' };
-export const qualityOf = { fast: 'draft', balanced: 'standard', detailed: 'high' };
 export const presets = { economy: -30, normal: 0, rich: 25 };
 export const IMAGE_EXT = new Set(['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif', 'tif', 'tiff']);
 export const OFFICE_EXT = new Set(['docx', 'doc', 'txt', 'rtf', 'odt', 'xlsx', 'xls', 'ods', 'csv', 'pptx', 'ppt', 'odp']);

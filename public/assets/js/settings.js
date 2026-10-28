@@ -7,8 +7,9 @@ import { presets, kindOf, isDocument, isJPEG } from './files.js';
 export function updateOptions() {
   seg('colors', state.settings.color);
   seg('qualities', state.settings.quality);
-  seg('speeds', state.settings.speed);
-  seg('presets', Object.keys(presets).find((name) => presets[name] === state.settings.density) || '');
+  seg('presets', state.settings.preset || '');
+  $('profileMode').textContent = state.settings.preset ? 'Профиль выбран · контраст 0' : 'Настроено вручную';
+  $('profileMode').classList.toggle('custom', !state.settings.preset);
   $('densityValue').textContent = state.settings.density > 0 ? `+${state.settings.density}` : state.settings.density;
   $('contrastValue').textContent = state.settings.contrast > 0 ? `+${state.settings.contrast}` : state.settings.contrast;
   $('density').value = state.settings.density;
@@ -20,8 +21,7 @@ export function updateOptions() {
   const pdfIPP = pdf && $('duplex').value === 'simplex' && $('scale').value === 'fit';
   // Все три режима доступны для документов и фотографий.
   $('qualities').classList.remove('disabled');
-  $('speeds').classList.remove('disabled');
-  document.querySelectorAll('#qualities button,#speeds button').forEach((button) => button.disabled = false);
+  document.querySelectorAll('#qualities button').forEach((button) => button.disabled = false);
   $('qualityNotice').textContent = pdf
     ? pdfIPP
       ? 'PDF: IPP-параметр Draft / Standard / High и подготовка страниц в 140 / 220 / 300 DPI.'
