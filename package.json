@@ -1,21 +1,22 @@
 {
   "name": "canon-studio",
-  "version": "4.1.0",
+  "version": "4.2.1",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "test": "node --test",
     "check": "node scripts/check-syntax.mjs",
-    "build:web": "node scripts/build-web.mjs"
+    "build:web": "node scripts/build-web.mjs",
+    "build:agent:win": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-installer.ps1"
   },
   "dependencies": {
     "pdfjs-dist": "5.4.530",
-    "sharp": "0.34.4",
-    "pdfkit": "0.20.2"
+    "pdfkit": "0.20.2",
+    "sharp": "0.35.5"
   },
   "engines": {
     "node": ">=22"
   },
-  "description": "Local Canon TS5350i print studio with modular browser UI and Windows/IPP print backends"
+  "description": "Canon Studio web app and paired Windows print agent (installer preview)"
 }
