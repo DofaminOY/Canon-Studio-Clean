@@ -2,11 +2,16 @@ import { $, flash } from './dom.js';
 import { state } from './state.js';
 import { speedOf, qualityOf, presets } from './files.js';
 import { api } from './api.js';
+import { initConnectionMode, setConnected, connectAgent, discoverPrinters, openBrowserPrint } from './connection.js';
 import { updateOptions, syncPageMode, summary } from './settings.js';
 import { selectFile, choosePdfPage, updateJPEG } from './preview.js';
 import { loadPrinters, loadStatus, loadQueue, loadTasks, sendPrint, cancelCurrent } from './printers.js';
 
 // Wire browser events once, then initialise the local session.
+initConnectionMode();
+$('connectAgent').addEventListener('click', () => void connectAgent());
+$('searchDevices').addEventListener('click', () => void discoverPrinters());
+$('browserPrint').addEventListener('click', openBrowserPrint);
 $('choose').addEventListener('click', () => $('file').click());
 $('replaceButton').addEventListener('click', () => $('file').click());
 $('file').addEventListener('change', (event) => selectFile(event.target.files?.[0]));
@@ -45,7 +50,12 @@ $('print').addEventListener('click', () => void sendPrint());
 $('cancel').addEventListener('click', () => void cancelCurrent());
 
 (async () => {
-  try { state.token = (await api('/api/config')).token; }
+  if (state.mode === 'web') {
+    // Static web mode has no server API. Never request localhost without a click.
+    updateOptions();
+    return;
+  }
+  try { state.token = (await api('/api/config')).token; setConnected(true); }
   catch (error) { flash(`Сервер не отвечает: ${error.message}`, 'bad'); return; }
   updateOptions();
   await loadPrinters();

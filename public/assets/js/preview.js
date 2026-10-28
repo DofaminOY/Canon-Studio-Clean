@@ -1,7 +1,7 @@
 import { $ , flash } from './dom.js';
 import { state } from './state.js';
 import { MAX_FILE, kindOf, extOf, isDocument, isPDF, isOffice, isJPEG } from './files.js';
-import { api } from './api.js';
+import { api, apiUrl } from './api.js';
 import { updateOptions, selectedPageMode, summary } from './settings.js';
 
 // PDF.js is intentionally browser-only; Poppler renders printable pages on server.
@@ -114,7 +114,14 @@ export async function renderJPEG(requestId) {
     state.previewController = controller;
     const query = new URLSearchParams({ name: original.name, color: state.settings.color,
       density: String(state.settings.density), contrast: String(state.settings.contrast) });
-    const response = await fetch('/api/preview-image?' + query, {
+    if (!state.agentConnected) {
+      if (requestId === state.generation) {
+        state.preparedJPEG = original;
+        showPreview(original, false);
+      }
+      return;
+    }
+    const response = await fetch(apiUrl('/api/preview-image?' + query), {
       method: 'POST', headers: { 'X-Canon-Token': state.token }, body: original, signal: controller.signal,
     });
     if (!response.ok) {
@@ -152,7 +159,16 @@ export async function prepareOfficePreview(file, selection) {
   updatePdfNavigation();
   $('pdfViewerMessage').textContent = 'Преобразование документа через LibreOffice…';
   try {
-    const response = await fetch('/api/preview-office?name=' + encodeURIComponent(file.name), {
+    if (!state.agentConnected) {
+      state.pdfLoading = false;
+      state.pdfDocument = null;
+      $('pdfStage').style.display = 'none';
+      updatePdfNavigation();
+      $('pdfViewerMessage').textContent = 'Для просмотра Office подключите агент.';
+      flash('Файл выбран. Office-документы требуют локального агента для просмотра и печати с настройками.', 'info');
+      return;
+    }
+    const response = await fetch(apiUrl('/api/preview-office?name=' + encodeURIComponent(file.name)), {
       method: 'POST', headers: { 'X-Canon-Token': state.token }, body: file,
     });
     if (!response.ok) {

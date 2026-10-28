@@ -116,7 +116,8 @@ export function summary() {
   const errorBox = $('pageError');
   errorBox.textContent = invalid;
   errorBox.classList.toggle('hidden', !invalid);
-  $('print').disabled = !state.chosenFile || !o.printer || state.busy || state.preparing || !!invalid || (isJPEG() && !state.preparedJPEG);
+  $('print').disabled = !state.agentConnected || !state.chosenFile || !o.printer || state.busy || state.preparing || !!invalid || (isJPEG() && !state.preparedJPEG);
+  $('browserPrint').disabled = !state.chosenFile;
   $('cancel').disabled = !state.activeTaskId;
   return invalid;
 }

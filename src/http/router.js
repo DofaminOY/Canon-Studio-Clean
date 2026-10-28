@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { HOST, PORT, ROOT, TOKEN, PRINTER_IP } from '../config.js';
+import { corsHeaders, allowedOrigin, safeLoopbackHost } from './origins.js';
 import { reply, bodyOf, postAllowed } from './helpers.js';
 import { getPrinters, getJobs, removeJob } from '../printers/windows.js';
 import { sendIPP, ippBody } from '../printers/ipp.js';
@@ -14,7 +15,27 @@ import { handlePrint, cancelTask } from '../jobs/requests.js';
 export function createServer() {
   return http.createServer(async (req, res) => {
   try {
+    if (!safeLoopbackHost(req.headers.host)) return reply(res, 403, { error: 'Недопустимый Host.' });
+    for (const [header, value] of Object.entries(corsHeaders(req))) res.setHeader(header, value);
+    if (req.method === 'OPTIONS') {
+      if (req.headers.origin && allowedOrigin(req.headers.origin)) {
+        res.writeHead(204, { 'Cache-Control': 'no-store' });
+        return res.end();
+      }
+      return reply(res, 403, { error: 'Origin не разрешён.' });
+    }
     const url = new URL(req.url, `http://${HOST}:${PORT}`);
+    if (req.method === 'GET' && url.pathname === '/api/health') {
+      return reply(res, 200, { service: 'canon-studio-agent', ok: true, version: '4.1.0' });
+    }
+    if (req.method === 'GET' && url.pathname === '/api/discovery') {
+      let printers = [];
+      try { printers = await getPrinters(); } catch { /* Windows spooler may be unavailable. */ }
+      let online = false;
+      try { const status = await sendIPP(ippBody(11), null, 2200); online = status.status === 0 || status.status === undefined; }
+      catch { /* no network scan; only test the configured IPP endpoint */ }
+      return reply(res, 200, { printers, configuredIPP: { online, address: PRINTER_IP } });
+    }
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
       const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'));
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',

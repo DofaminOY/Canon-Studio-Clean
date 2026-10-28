@@ -1,12 +1,13 @@
 {
   "name": "canon-studio",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
     "test": "node --test",
-    "check": "node scripts/check-syntax.mjs"
+    "check": "node scripts/check-syntax.mjs",
+    "build:web": "node scripts/build-web.mjs"
   },
   "dependencies": {
     "pdfjs-dist": "5.4.530",

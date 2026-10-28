@@ -1,5 +1,6 @@
 import { MAX_UPLOAD_BYTES } from '../documents/print-utils.js';
-import { HOST, PORT, TOKEN } from '../config.js';
+import { TOKEN } from '../config.js';
+import { allowedOrigin, safeLoopbackHost } from './origins.js';
 
 // Explicit response/stream limits and same-origin session guard.
 
@@ -35,6 +36,6 @@ export function bodyOf(req, max = MAX_UPLOAD_BYTES) {
 }
 
 export function postAllowed(req) {
-  const expectedOrigin = `http://${HOST}:${PORT}`;
-  return req.headers['x-canon-token'] === TOKEN && (!req.headers.origin || req.headers.origin === expectedOrigin);
+  return safeLoopbackHost(req.headers.host) && req.headers['x-canon-token'] === TOKEN &&
+    (!req.headers.origin || allowedOrigin(req.headers.origin));
 }

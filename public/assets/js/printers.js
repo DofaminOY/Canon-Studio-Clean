@@ -7,6 +7,7 @@ import { buildSettings, checkSettings, summary } from './settings.js';
 // Printer listing, polling, submission and cancel interaction.
 
 export async function loadPrinters() {
+  if (!state.agentConnected) return;
   try {
     const result = await api('/api/printers');
     const previous = $('printer').value;
@@ -24,6 +25,7 @@ export async function loadPrinters() {
 }
 
 export async function loadStatus() {
+  if (!state.agentConnected) return;
   try {
     const data = await api('/api/status');
     $('dot').classList.add('online');
@@ -37,6 +39,7 @@ export async function loadStatus() {
 }
 
 export async function loadQueue(announce = false) {
+  if (!state.agentConnected) return;
   const target = $('queue');
   if (announce) {
     $('refreshQueue').disabled = true;
@@ -84,6 +87,7 @@ export async function cancelQueueJob(printer, job) {
 }
 
 export async function loadTasks() {
+  if (!state.agentConnected) return;
   try {
     const data = await api('/api/tasks');
     const target = $('history'); target.replaceChildren();
@@ -106,7 +110,7 @@ export async function loadTasks() {
 }
 
 export async function sendPrint() {
-  if (!state.chosenFile || state.busy || state.preparing || !$('printer').value) return;
+  if (!state.agentConnected || !state.chosenFile || state.busy || state.preparing || !$('printer').value) return;
   const o = buildSettings();
   const problem = checkSettings(o);
   if (problem) { flash(problem, 'bad'); return; }

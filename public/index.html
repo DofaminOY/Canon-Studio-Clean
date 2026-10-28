@@ -13,6 +13,16 @@
     <div class="brand"><div class="logo" aria-hidden="true">▣</div><div>Canon Studio<div class="sub">PIXMA TS5350i · Wi-Fi Print Manager</div></div></div>
     <div class="status"><span class="dot" id="dot"></span><span id="connection">Проверка принтера…</span></div>
   </header>
+  <section class="card connection-panel" aria-label="Подключение к принтеру">
+    <div class="card-head"><h2>Подключение и поиск принтеров</h2><span class="tag">Локально или через браузер</span></div>
+    <p id="agentConnection" role="status">Проверяем режим запуска…</p>
+    <div class="connection-actions">
+      <button type="button" class="btn primary" id="connectAgent">Подключить локальный агент</button>
+      <button type="button" class="btn" id="searchDevices" disabled>↻ Найти принтеры</button>
+      <button type="button" class="btn" id="browserPrint" disabled>Открыть для печати через браузер</button>
+    </div>
+    <p class="note">Без локального агента можно выбирать и просматривать файлы. Для полного управления качеством, цветом, чернилами и очередью требуется агент на Windows. Доступ к локальной сети браузер запросит только после нажатия «Подключить».</p>
+  </section>
   <h1>Печать и управление очередью</h1>
   <p class="lead">Выберите документ, страницы и параметры. Отправка начинается только после нажатия кнопки.</p>
   <main class="grid">
@@ -90,7 +100,7 @@
       <div id="history" class="job-list"><div class="empty">Заданий пока нет.</div></div>
     </section>
   </main>
-  <footer>Canon Studio — локальный интерфейс, только на этом компьютере (127.0.0.1). Интерфейс адаптируется под телефон и планшет; удалённый доступ не включён из соображений безопасности.</footer>
+  <footer>Canon Studio — локальный агент печати и браузерный интерфейс. Для полного управления принтером требуется локальное подключение. Запросы печати не отправляются без подтверждения.</footer>
 </div>
 <script type="module" src="/assets/js/app.js"></script>
 </body>

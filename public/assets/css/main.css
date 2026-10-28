@@ -664,3 +664,10 @@ footer {
 select:disabled {
   opacity:.55;
 }
+
+/* Connection Manager: works both on Vercel and when hosted by the local agent. */
+.connection-panel { margin-bottom: 22px; }
+.connection-panel p { margin: 7px 0 12px; }
+.connection-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.connection-actions .btn { flex: 1 1 210px; }
+@media (max-width: 490px) { .connection-actions { flex-direction: column; } }

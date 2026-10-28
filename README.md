@@ -1,8 +1,8 @@
-# Canon Studio 4.0 — local print manager
+# Canon Studio 4.0 — local printing + Vercel web interface
 
 Node.js 22+ | Windows 10/11 | Canon TS5350i series | IPP / Windows Print Spooler
 
-**Local-only application.** Runs at `http://127.0.0.1:3177`, does not print from Vercel cloud. Printer must be on the same Wi-Fi network. Do not expose the local server to the public internet.
+**One codebase, two modes.** The full local application runs at `http://127.0.0.1:3177`; Vercel hosts the same frontend as a static website. In browser-only mode users can choose and preview PDFs/photos, and use their browser print dialog. Full IPP/Windows printing requires connecting the local print agent. Do not expose the local server to the public internet.
 
 ## Install
 
@@ -32,6 +32,21 @@ $env:POPPLER_BIN = 'C:\your-poppler-path\Library\bin'
 $env:SUMATRA_PDF_PATH = 'C:\your-SumatraPDF-path\SumatraPDF.exe'
 npm start
 ```
+
+## Vercel / browser mode
+
+Vercel automatically uses `vercel.json` to run `npm run build:web`, copying the two `pdfjs-dist` browser modules into `public/vendor` before publishing the `public` folder. There is **no Node.js printer service on Vercel**. The published web UI can choose local files (with user consent) and show PDFs/photos. Browser fallback opens PDF/image/TXT for Ctrl+P; Office files can be downloaded for opening in a compatible application.
+
+Local printing from a public HTTPS origin requires explicit permission in the browser and **opt-in on the Windows PC**. The web UI never probes localhost until the user clicks **Подключить локальный агент**. On the Windows PC, install/keep Canon Studio and run from PowerShell:
+
+```powershell
+Set-Location 'G:\IT\Node.JS\Canon-Studio-Clean'
+.\scripts\start-agent.ps1 -SiteOrigin 'https://YOUR-DEPLOYMENT.vercel.app'
+```
+
+Change `YOUR-DEPLOYMENT.vercel.app` to your **exact** HTTPS Vercel hostname. The server binds to `127.0.0.1` and only permits the stated cross-origin via CORS. Keep the agent terminal open. Open the site **on that same computer** and explicitly allow the browser's localhost/network permission when prompted; then click **Найти принтеры**. The agent lists installed Windows printers and tests only the configured Canon IPP endpoint; it does not scan unknown devices or grant remote internet printing. `CANON_STUDIO_ALLOWED_ORIGIN` is not a secret, but do not configure an untrusted website. Access from another device to the same PC requires a separately designed authenticated relay (not included).
+
+In browsers that block HTTPS→localhost network access even after a user gesture, use the local UI at `http://127.0.0.1:3177` instead. Browser fallback does not apply Canon-specific print-quality, tone or queue settings.
 
 ## Architecture
 
