@@ -25,6 +25,9 @@ $('drop').addEventListener('drop', (event) => {
 document.querySelectorAll('#colors button').forEach((button) => button.addEventListener('click', () => {
   state.settings.color = button.dataset.value; updateOptions(); updateJPEG();
 }));
+document.querySelectorAll('#orientations button').forEach((button) => button.addEventListener('click', () => {
+  state.settings.orientation = button.dataset.value; updateOptions();
+}));
 document.querySelectorAll('#qualities button').forEach((button) => button.addEventListener('click', () => {
   // Качество и скорость — один параметр: Draft / Standard / High.
   state.settings.quality = button.dataset.value; updateOptions();

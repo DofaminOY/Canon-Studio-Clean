@@ -7,6 +7,7 @@ import { presets, kindOf, isDocument, isJPEG } from './files.js';
 export function updateOptions() {
   seg('colors', state.settings.color);
   seg('qualities', state.settings.quality);
+  seg('orientations', state.settings.orientation);
   seg('presets', state.settings.preset || '');
   $('profileMode').textContent = state.settings.preset ? 'Профиль выбран · контраст 0' : 'Настроено вручную';
   $('profileMode').classList.toggle('custom', !state.settings.preset);
@@ -58,7 +59,7 @@ export function buildSettings() {
   return {
     type: kindOf(state.chosenFile?.name) || '', name: state.chosenFile?.name || '', printer: $('printer').value,
     color: state.settings.color, quality: state.settings.quality,
-    copies: $('copies').value, duplex: $('duplex').value,
+    copies: $('copies').value, duplex: $('duplex').value, orientation: state.settings.orientation,
     paper: $('paper').value, scale: isDocument() ? $('scale').value : 'fit',
     // Для сервера «текущая» = обычный диапазон N–N.
     pages: isDocument() ? (selectedPageMode() === 'current' ? 'range' : selectedPageMode()) : 'all',
@@ -70,6 +71,7 @@ export function buildSettings() {
 }
 
 export function checkSettings(o) {
+  if (!['portrait', 'landscape'].includes(o.orientation)) return 'Выбери ориентацию печати.';
   const copies = Number(o.copies);
   if (!Number.isInteger(copies) || copies < 1 || copies > 10) return 'Копий должно быть от 1 до 10.';
   if (isDocument()) {
@@ -111,13 +113,13 @@ export function summary() {
       : o.pages === 'range' ? `стр. ${o.from || '?'}–${o.to || '?'} из ${total || '?'}`
         : `все ${total || '?'} стр.` : 'одно изображение';
   $('summary').textContent = state.chosenFile
-    ? `${o.name} · ${pages} · ${o.copies} коп. · ${o.color === 'monochrome' ? 'ч/б' : 'цвет'} · ${o.paper} · ${o.duplex === 'simplex' ? '1 сторона' : '2 стороны'} · качество ${o.quality} · интенсивность ${state.settings.density} · контраст ${state.settings.contrast}`
+    ? `${o.name} · ${pages} · ${o.copies} коп. · ${o.color === 'monochrome' ? 'ч/б' : 'цвет'} · ${o.paper} · ${o.orientation === 'landscape' ? 'альбомная' : 'книжная'} · ${o.duplex === 'simplex' ? '1 сторона' : '2 стороны'} · качество ${o.quality} · интенсивность ${state.settings.density} · контраст ${state.settings.contrast}`
     : 'Выбери документ или фотографию.';
   const errorBox = $('pageError');
   errorBox.textContent = invalid;
   errorBox.classList.toggle('hidden', !invalid);
   $('print').disabled = !state.agentConnected || !state.chosenFile || !o.printer || state.busy || state.preparing || !!invalid || (isJPEG() && !state.preparedJPEG);
   $('browserPrint').disabled = !state.chosenFile;
-  $('cancel').disabled = !state.activeTaskId;
+  $('cancel').disabled = !state.activeTaskId || !state.taskCanCancel;
   return invalid;
 }

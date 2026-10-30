@@ -14,8 +14,9 @@ export function publicTask(t) {
   return {
     id: t.id, status: t.status, message: t.message, warning: t.warning || null, type: t.type, totalPages: t.totalPages ?? null, pagesSelected: t.pagesSelected ?? null,
     printer: t.printer, fileName: t.fileName, windowsJobId: t.windowsJobId ?? null,
-    ippJobId: t.ippJobId ?? null, started: t.started,
-    canCancel: ['sending', 'spooling', 'submitted', 'cancel-requested'].includes(t.status),
+    ippJobId: t.ippJobId ?? null, ippJobIds: [...(t.ippJobIds || [])], started: t.started,
+    canCancel: ['sending', 'spooling'].includes(t.status) ||
+      (t.status === 'submitted' && Boolean(t.ippJobIds?.length || t.ippJobId || t.windowsJobId)),
   };
 }
 

@@ -93,16 +93,24 @@ export async function loadTasks() {
     const target = $('history'); target.replaceChildren();
     if (!data.tasks.length) target.append(simpleBlock('Заданий пока нет.'));
     for (const task of data.tasks) {
-      target.append(makeJob(task.fileName, `${task.status}${task.warning ? ' · ВНИМАНИЕ: ' + task.warning : ''} · ${task.message} · ${task.type.toUpperCase()}${task.windowsJobId ? ` · Windows №${task.windowsJobId}` : ''}${task.ippJobId ? ` · IPP №${task.ippJobId}` : ''}`));
+      const ids = task.ippJobIds?.length ? task.ippJobIds : (task.ippJobId ? [task.ippJobId] : []);
+      const action = task.canCancel ? (ids.length ? 'Отменить IPP' : 'Остановить задание') : null;
+      target.append(makeJob(task.fileName,
+        `${task.status}${task.warning ? ' · ВНИМАНИЕ: ' + task.warning : ''} · ${task.message} · ${task.type.toUpperCase()}${task.windowsJobId ? ` · Windows №${task.windowsJobId}` : ''}${ids.length ? ` · IPP №${ids.join(', ')}` : ''}`,
+        action, action ? () => void cancelTaskById(task.id) : null));
     }
+    if (!state.activeTaskId && data.active) state.activeTaskId = data.active;
     if (state.activeTaskId) {
       const item = data.tasks.find((task) => task.id === state.activeTaskId);
       if (item) {
         state.busy = ['sending', 'spooling', 'cancel-requested'].includes(item.status) && data.active === item.id;
-        $('cancel').disabled = !item.canCancel;
+        state.taskCanCancel = item.canCancel;
         const type = item.status === 'error' ? 'bad' : item.warning ? 'info' : item.status === 'submitted' || item.status === 'cancelled' ? 'good' : 'info';
         flash(item.message, type);
-        if (['submitted', 'error', 'cancelled'].includes(item.status)) state.activeTaskId = item.canCancel ? item.id : null;
+        if (!item.canCancel) { state.activeTaskId = null; state.taskCanCancel = false; }
+      } else {
+        state.activeTaskId = null;
+        state.taskCanCancel = false;
       }
       summary();
     }
@@ -136,15 +144,22 @@ export async function sendPrint() {
   finally { summary(); }
 }
 
-export async function cancelCurrent() {
-  if (!state.activeTaskId) { flash('Нет активного задания для отмены.', 'info'); return; }
-  if (!confirm('Попытаться остановить передачу/удалить это задание? Уже напечатанные страницы останутся.')) return;
+async function cancelTaskById(id) {
+  if (!confirm('Остановить передачу и отправить Cancel-Job для известных IPP/Windows заданий? Уже напечатанное не отменить.')) return;
   try {
     const result = await api('/api/task/cancel', {
       method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Canon-Token': state.token },
-      body: JSON.stringify({ id: state.activeTaskId }),
+      body: JSON.stringify({ id }),
     });
-    flash(result.task.message, 'info');
+    flash(result.task.message, result.task.status === 'unavailable' ? 'bad' : 'info');
     await Promise.all([loadTasks(), loadQueue()]);
   } catch (error) { flash(error.message, 'bad'); }
+}
+
+export async function cancelCurrent() {
+  if (!state.activeTaskId || !state.taskCanCancel) {
+    flash('Выбери доступное IPP/Windows задание в истории для отмены.', 'info');
+    return;
+  }
+  await cancelTaskById(state.activeTaskId);
 }

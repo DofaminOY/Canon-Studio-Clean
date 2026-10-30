@@ -29,6 +29,7 @@ export function validateSettings(input) {
   const printer = String(input.printer || '');
   const duplex = String(input.duplex || '');
   const paper = String(input.paper || '');
+  const orientation = String(input.orientation || 'portrait');
   const scale = String(input.scale || '');
   const pages = String(input.pages || 'all');
   const filter = String(input.filter || 'all');
@@ -43,6 +44,7 @@ export function validateSettings(input) {
   if (!['draft', 'standard', 'high'].includes(quality)) throw Error('Некорректное качество.');
   if (!['simplex', 'duplexlong', 'duplexshort'].includes(duplex)) throw Error('Некорректный двусторонний режим.');
   if (!Object.hasOwn(PAPER, paper)) throw Error('Неподдерживаемый формат бумаги.');
+  if (!['portrait', 'landscape'].includes(orientation)) throw Error('Некорректная ориентация печати.');
   if (!['fit', 'shrink', 'noscale'].includes(scale)) throw Error('Некорректный масштаб.');
   if (!['all', 'range'].includes(pages)) throw Error('Некорректный выбор страниц.');
   if (!['all', 'odd', 'even'].includes(filter)) throw Error('Некорректный фильтр страниц.');
@@ -60,7 +62,7 @@ export function validateSettings(input) {
     }
   }
 
-  return { type, name, color, quality, printer, duplex, paper, scale, pages, filter, copies, from, to, density, contrast };
+  return { type, name, color, quality, printer, duplex, paper, orientation, scale, pages, filter, copies, from, to, density, contrast };
 }
 
 // САМАЯ ВАЖНАЯ ПРОВЕРКА: вызывается на сервере после чтения реального PDF.
@@ -96,7 +98,7 @@ export function pdfPrintSettings(options) {
   const parts = [];
   if (options.pages === 'range') parts.push(`${options.from}-${options.to}`);
   if (options.filter !== 'all') parts.push(options.filter);
-  parts.push(`${options.copies}x`, options.color, options.duplex, `paper=${options.paper}`,
+  parts.push(`${options.copies}x`, options.color, options.duplex, options.orientation || 'portrait', `paper=${options.paper}`,
     options.scale, 'ignore-pdf-print-settings');
   return parts.join(',');
 }
@@ -105,6 +107,7 @@ export function jpegIPPSettings(options) {
   return {
     quality: { draft: 3, standard: 4, high: 5 }[options.quality],
     media: PAPER[options.paper],
+    orientation: options.orientation === 'landscape' ? 4 : 3,
     sides: { simplex: 'one-sided', duplexlong: 'two-sided-long-edge', duplexshort: 'two-sided-short-edge' }[options.duplex],
   };
 }

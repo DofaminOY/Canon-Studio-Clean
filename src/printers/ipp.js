@@ -63,6 +63,17 @@ export function sendIPP(body, task = null, timeout = 30000) {
   });
 }
 
+// 0x09 Get-Job-Attributes: read state of one known IPP job.
+export async function ippGetJob(id) {
+  if (!Number.isInteger(id) || id <= 0) throw Error('Некорректный IPP job-id.');
+  const response = await sendIPP(ippBody(0x09, [ippInt(0x21, 'job-id', id)]), null, 7000);
+  return {
+    id,
+    state: response.attributes['job-state']?.[0] ?? null,
+    reasons: response.attributes['job-state-reasons'] || [],
+  };
+}
+
 export async function ippCancel(id) {
   if (!Number.isInteger(id) || id <= 0) throw Error('Некорректный IPP job-id.');
   const body = ippBody(0x08, [

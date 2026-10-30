@@ -88,6 +88,7 @@
         <div class="field"><label class="label" for="pageFilter">Отбор страниц</label><select id="pageFilter"><option value="all">Все выбранные</option><option value="odd">Только нечётные</option><option value="even">Только чётные</option></select></div>
         <div class="field"><label class="label" for="copies">Копий</label><input id="copies" type="number" min="1" max="10" value="1"></div>
         <div class="field"><label class="label" for="paper">Бумага</label><select id="paper"><option value="A4">A4</option><option value="A5">A5</option><option value="Letter">Letter</option></select></div>
+        <div class="field"><div class="label" id="orientationLabel">Ориентация печати</div><div class="seg two-seg" id="orientations" role="group" aria-labelledby="orientationLabel"><button type="button" class="selected" data-value="portrait" aria-pressed="true">▯ Книжная</button><button type="button" data-value="landscape" aria-pressed="false">▭ Альбомная</button></div><p class="note">Для IPP ориентация передаётся принтеру. Через Windows ориентация содержимого зависит также от настроек драйвера.</p></div>
         <div class="field"><label class="label" for="duplex">Стороны листа</label><select id="duplex"><option value="simplex">Односторонняя</option><option value="duplexlong">Двусторонняя · длинный край</option><option value="duplexshort">Двусторонняя · короткий край</option></select></div>
         <div class="field"><label class="label" for="scale">Масштаб PDF</label><select id="scale"><option value="fit">По размеру листа</option><option value="shrink">Только уменьшать</option><option value="noscale">100% без масштабирования</option></select></div>
       </div>
@@ -99,7 +100,7 @@
 
     <section class="card wide">
       <div class="card-head"><h2>05 · Очередь печати Windows</h2><button type="button" class="btn" id="refreshQueue">↻ Обновить очередь</button></div>
-      <p class="note">Можно отменить конкретный документ из очереди Canon. Изображения, отправленные напрямую по IPP, не всегда отображается в очереди Windows.</p>
+      <p class="note">IPP и Windows имеют разные очереди. Прямые IPP-задания Canon Studio можно отменять в истории ниже по их номеру, пока принтер их ещё выполняет. Уже напечатанные страницы не отменяются.</p>
       <div id="queue" class="job-list" style="margin-top:16px"><div class="empty">Загрузка заданий…</div></div>
       <div class="divider"></div>
       <h3>Последние задания Canon Studio</h3>

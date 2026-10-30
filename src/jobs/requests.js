@@ -3,7 +3,7 @@ import { MAX_UPLOAD_BYTES, validateSettings, validatePages, fileKind } from '../
 import { checkFileSignature, countPdfPages, convertOfficeToPdf, convertImageToJpeg, convertTextToPdf } from '../documents/document-tools.js';
 import { reply, bodyOf } from '../http/helpers.js';
 import { getPrinters, getJobs, removeJob } from '../printers/windows.js';
-import { ippCancel } from '../printers/ipp.js';
+import { ippCancel, ippGetJob } from '../printers/ipp.js';
 import { executeTask } from './print-engine.js';
 import { currentTask, pendingUpload, recentTasks, setCurrentTask, setPendingUpload, keepTask, update, publicTask } from './store.js';
 
@@ -76,28 +76,65 @@ export async function handlePrint(req, res, url) {
 export async function cancelTask(id) {
   const task = recentTasks.find((t) => t.id === id);
   if (!task) throw Error('Задание не найдено.');
-  if (['error', 'cancelled'].includes(task.status)) return publicTask(task);
+  if (!publicTask(task).canCancel) return publicTask(task);
+
+  const sending = ['sending', 'spooling'].includes(task.status);
   task.cancelRequested = true;
+  update(task, 'cancel-requested', 'Запрошена остановка передачи; проверяем задания принтера…');
   if (task.child) task.child.kill();
   if (task.rendererChild) task.rendererChild.kill();
   if (task.httpRequest) task.httpRequest.destroy(Error('Отмена пользователем.'));
+
+  let windowsRemoved = false;
+  let windowsError = '';
   if (task.windowsJobId) {
-    try { await removeJob(task.printer, task.windowsJobId); }
-    catch { /* Могло уже завершиться. */ }
+    try { await removeJob(task.printer, task.windowsJobId); windowsRemoved = true; }
+    catch (error) { windowsError = error.message; }
   }
-  const ippIds = task.ippJobIds?.length ? task.ippJobIds : (task.ippJobId ? [task.ippJobId] : []);
-  if (ippIds.length) {
-    let errors = 0;
-    for (const jobId of ippIds) {
-      try { await ippCancel(jobId); }
-      catch { errors++; /* Некоторые листы могли уже выйти из очереди. */ }
+
+  const ids = [...new Set(task.ippJobIds?.length ? task.ippJobIds :
+    (task.ippJobId ? [task.ippJobId] : []))];
+  if (ids.length) {
+    const accepted = [];
+    const failed = [];
+    for (const jobId of ids) {
+      try {
+        await ippCancel(jobId);
+        accepted.push(jobId);
+      } catch (error) {
+        let reason = error.message;
+        try {
+          const job = await ippGetJob(jobId);
+          if (job.state === 9) reason = 'уже завершено';
+          else if (job.state === 7) reason = 'уже отменено';
+          else if (job.state === 8) reason = 'прервано принтером';
+        } catch { /* Принтер уже мог удалить задание из памяти. */ }
+        failed.push(`№${jobId}: ${reason}`);
+      }
     }
-    update(task, errors ? 'cancel-requested' : 'cancelled',
-      `Отмена отправлена для ${ippIds.length - errors} из ${ippIds.length} IPP-заданий. Напечатанные листы уже не остановить.`);
-  } else if (task.status === 'submitted') {
-    update(task, 'cancel-requested', 'Запрошена отмена. Если задания нет в очереди Windows, оно могло уже уйти на принтер.');
+    let confirmation = '';
+    if (accepted.length) {
+      try {
+        const last = await ippGetJob(accepted.at(-1));
+        if (last.state === 7) confirmation = 'Последнее задание подтверждено как отменённое.';
+        else if (last.state === 9) confirmation = 'Последнее задание уже завершено.';
+        else confirmation = 'Физическая остановка ещё не подтверждена.';
+      } catch {
+        confirmation = 'Canon не вернул состояние последнего задания.';
+      }
+    }
+    update(task, accepted.length ? 'cancel-requested' : 'unavailable',
+      `Canon принял Cancel-Job для ${accepted.length}/${ids.length} IPP-заданий. ${confirmation}` +
+      (failed.length ? ` Не удалось: ${failed.slice(0, 4).join('; ')}` : '') +
+      ' Уже напечатанные страницы не отменяются.');
+  } else if (windowsRemoved) {
+    update(task, 'cancel-requested', 'Windows принял удаление задания; завершение отмены не подтверждено.');
+  } else if (sending) {
+    update(task, 'cancel-requested', 'Передача остановлена. Если Canon уже получил данные без IPP job-id, адресная отмена невозможна.' +
+      (windowsError ? ' Windows: ' + windowsError : ''));
   } else {
-    update(task, 'cancel-requested', 'Остановка передачи запрошена.');
+    update(task, 'unavailable', 'Задание уже отправлено, но IPP/Windows job-id отсутствует. Отмена невозможна.' +
+      (windowsError ? ' Windows: ' + windowsError : ''));
   }
   return publicTask(task);
 }

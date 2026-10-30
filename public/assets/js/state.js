@@ -1,9 +1,9 @@
 // One explicit state object shared by browser feature modules.
 export const state = {
   mode: 'local', agentConnected: false,
-  settings: { color: 'monochrome', quality: 'standard', preset: 'normal', density: 0, contrast: 0 },
+  settings: { color: 'monochrome', quality: 'standard', orientation: 'portrait', preset: 'normal', density: 0, contrast: 0 },
   token: '', chosenFile: null, preparedJPEG: null, previewURL: null,
-  preparing: false, previewTimer: null, generation: 0, activeTaskId: null,
+  preparing: false, previewTimer: null, generation: 0, activeTaskId: null, taskCanCancel: false,
   busy: false, lastMessage: '', pdfjsLib: null, pdfDocument: null,
   pdfPageNumber: 1, pdfLoading: false, pdfRenderQueue: Promise.resolve(),
   pdfSelectionId: 0, previewController: null,
